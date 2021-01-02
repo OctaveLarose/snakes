@@ -4,23 +4,13 @@ use rand::Rng;
 
 use crate::{Snake, Direction, Pos, GameData, MAP_X, MAP_Y};
 
-pub enum UpdateValue { Ok, GameStop }
+pub enum UpdateValue { Ok, GameLost, GameStop }
 
-pub fn spawn_food(nbr_to_spawn: u8,
-                  mut current_food_positions: [Option<Pos>; crate::MAX_FOOD as usize])
-                  -> [Option<Pos>; crate::MAX_FOOD as usize]
+pub fn spawn_food() -> Pos
 {
     let mut rng = rand::thread_rng();
-    let mut nbr_added: u8 = 0;
 
-    for i in 0..crate::MAX_FOOD {
-        if current_food_positions[i as usize].is_none() && nbr_added < nbr_to_spawn {
-            current_food_positions[i as usize] = Some(Pos{x: rng.gen_range(0..MAP_X), y: rng.gen_range(0..MAP_Y)});
-            nbr_added += 1;
-        }
-    }
-
-    current_food_positions
+    Pos{x: rng.gen_range(0..MAP_X), y: rng.gen_range(0..MAP_Y)}
 }
 
 fn update_snake_pos(snake: &mut Snake) {
@@ -45,6 +35,36 @@ fn update_snake_pos(snake: &mut Snake) {
     }
 }
 
+fn check_snake_pos(snake: &mut Snake, mut food_pos: &mut Pos) -> UpdateValue {
+    // Checking if the snake is out of bounds
+    match snake.body[0] {
+        pos if pos.x < 0 => UpdateValue::GameLost,
+        pos if pos.x >= MAP_X => UpdateValue::GameLost,
+        pos if pos.y < 0 => UpdateValue::GameLost,
+        pos if pos.y >= MAP_Y => UpdateValue::GameLost,
+        _ => UpdateValue::Ok
+    };
+
+    // Checking collision with body parts
+    for (idx, body_part) in snake.body.iter().enumerate() {
+        if idx == 0 {
+            continue
+        }
+
+        if snake.body[0] == *body_part {
+            return UpdateValue::GameLost;
+        }
+    }
+
+    // Checking collision with food
+    if snake.body[0] == *food_pos {
+        let new_food = spawn_food();
+        food_pos.x = new_food.x;
+        food_pos.y = new_food.y;
+    }
+    UpdateValue::Ok
+}
+
 fn change_snake_dir(event: sdl2::event::Event, snake: &mut Snake) {
     snake.dir = match event {
         sdl2::event::Event::KeyDown {keycode: Some(sdl2::keyboard::Keycode::Up), .. } => Direction::NORTH,
@@ -61,6 +81,10 @@ pub fn update(event_pump: &mut sdl2::EventPump,
 {
     *map_blueshift = (*map_blueshift + 1) % 255;
     update_snake_pos(&mut game_data.snake);
+
+    if let UpdateValue::GameLost = check_snake_pos(&mut game_data.snake, &mut game_data.food_position) {
+        return UpdateValue::GameLost;
+}   ;
 
     for event in event_pump.poll_iter() {
         match event {

@@ -12,20 +12,24 @@ use crate::update::{update, spawn_food};
 use crate::update::UpdateValue;
 use crate::Direction::NORTH;
 
-const MAP_X: u32 = 40;
-const MAP_Y: u32 = 40;
-const MAP_SIZE: u32 = MAP_X * MAP_Y;
-const MAP_TILE_SIZE: u32 = 10;
-
-const MAX_FOOD: u8 = 2;
+const MAP_X: i32 = 40;
+const MAP_Y: i32 = 40;
+const MAP_SIZE: i32 = MAP_X * MAP_Y;
+const MAP_TILE_SIZE: i32 = 10;
 
 #[derive(Copy, Clone)]
 enum Direction {NORTH, EAST, SOUTH, WEST}
 
 #[derive(Copy, Clone)]
 pub struct Pos {
-    x: u32,
-    y: u32
+    x: i32,
+    y: i32
+}
+
+impl PartialEq for Pos {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
 }
 
 pub struct Snake {
@@ -36,12 +40,12 @@ pub struct Snake {
 pub struct GameData {
     map: [Rect; MAP_SIZE as usize],
     snake: Snake,
-    food_positions: [Option<Pos>; MAX_FOOD as usize]
+    food_position: Pos
 }
 
 fn init_map() -> [Rect; MAP_SIZE as usize] {
     let mut map: [sdl2::rect::Rect; MAP_SIZE as usize] =
-        [sdl2::rect::Rect::new(0, 0, MAP_TILE_SIZE, MAP_TILE_SIZE); MAP_SIZE as usize];
+        [sdl2::rect::Rect::new(0, 0, MAP_TILE_SIZE as u32, MAP_TILE_SIZE as u32); MAP_SIZE as usize];
 
     for i in 0..MAP_SIZE {
         map[i as usize].x = (i % MAP_X * MAP_TILE_SIZE) as i32;
@@ -59,9 +63,13 @@ fn game_loop(sdl_context: &sdl2::Sdl,
     let mut map_blueshift = 0;
 
     loop {
-        if let UpdateValue::GameStop = update(&mut event_pump, game_data, &mut map_blueshift) {
-            return
+        match update(&mut event_pump, game_data, &mut map_blueshift)
+        {
+            UpdateValue::Ok => {},
+            UpdateValue::GameLost => { print!("You lost!"); return () }
+            _ => return ()
         }
+
         render(canvas, game_data, map_blueshift);
         ::std::thread::sleep(Duration::new(0, 4_000_000_000u32 / 60));
     }
@@ -71,7 +79,9 @@ pub fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    let window = video_subsystem.window("Rusty snake", MAP_X * MAP_TILE_SIZE, MAP_Y * MAP_TILE_SIZE)
+    let window = video_subsystem.window("Rusty snake",
+                                        (MAP_X * MAP_TILE_SIZE) as u32,
+                                        (MAP_Y * MAP_TILE_SIZE) as u32)
         .position_centered()
         .build()
         .unwrap();
@@ -89,7 +99,8 @@ pub fn main() {
                        Pos { x: MAP_X / 2, y: MAP_Y / 2 + 1 },
                        Pos { x: MAP_X / 2, y: MAP_Y / 2 + 2 }]
         },
-        food_positions: spawn_food(MAX_FOOD, [None; MAX_FOOD as usize]) };
+        food_position: spawn_food()
+    };
 
     game_loop(&sdl_context, &mut canvas, &mut game_data);
 }
