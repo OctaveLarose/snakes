@@ -1,6 +1,6 @@
 use sdl2::rect::Rect;
 use sdl2::pixels::Color;
-use crate::{Snake, MAP_X};
+use crate::{Snake, MAP_X, GameData};
 
 fn render_map(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
               map: &[Rect; crate::MAP_SIZE as usize],
@@ -31,10 +31,9 @@ fn draw_snake(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
 }
 
 pub fn render(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-          map: &[Rect; crate::MAP_SIZE as usize],
-          snake: &Snake,
+          game_data: &GameData,
           i: u8) {
-    render_map(canvas, map, i);
-    draw_snake(canvas, map, snake);
+    render_map(canvas, &game_data.map, i);
+    draw_snake(canvas, &game_data.map, &game_data.snake);
     canvas.present();
 }

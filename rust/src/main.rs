@@ -8,20 +8,22 @@ mod render;
 mod update;
 
 use crate::render::render;
-use crate::update::update;
+use crate::update::{update, spawn_food};
 use crate::update::UpdateValue;
 use crate::Direction::NORTH;
 
-const MAP_X: u32 = 50;
-const MAP_Y: u32 = 50;
+const MAP_X: u32 = 40;
+const MAP_Y: u32 = 40;
 const MAP_SIZE: u32 = MAP_X * MAP_Y;
 const MAP_TILE_SIZE: u32 = 10;
+
+const MAX_FOOD: u8 = 2;
 
 #[derive(Copy, Clone)]
 enum Direction {NORTH, EAST, SOUTH, WEST}
 
 #[derive(Copy, Clone)]
-struct Pos {
+pub struct Pos {
     x: u32,
     y: u32
 }
@@ -29,6 +31,12 @@ struct Pos {
 pub struct Snake {
     dir: Direction,
     body: Vec<Pos>
+}
+
+pub struct GameData {
+    map: [Rect; MAP_SIZE as usize],
+    snake: Snake,
+    food_positions: [Pos; MAX_FOOD as usize]
 }
 
 fn init_map() -> [Rect; MAP_SIZE as usize] {
@@ -45,23 +53,16 @@ fn init_map() -> [Rect; MAP_SIZE as usize] {
 
 fn game_loop(sdl_context: &sdl2::Sdl,
              canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-             map: &[Rect; MAP_SIZE as usize]) {
+             game_data: &mut GameData) {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    let mut snake: Snake = Snake {
-        dir: NORTH,
-        body: vec![Pos { x: MAP_X / 2, y: MAP_Y / 2 },
-                   Pos { x: MAP_X / 2, y: MAP_Y / 2 + 1 },
-                   Pos { x: MAP_X / 2, y: MAP_Y / 2 + 2 }]
-    };
     let mut i = 0;
 
     loop {
-        if let UpdateValue::GameStop = update(&mut event_pump, &mut snake, &mut i) {
+        if let UpdateValue::GameStop = update(&mut event_pump, game_data, &mut i) {
             return
         }
-        render(canvas, &map, &snake, i);
-        // ::std::thread::sleep(Duration::new(0, 2_000_000_000u32 / 60));
+        render(canvas, game_data, i);
         ::std::thread::sleep(Duration::new(0, 4_000_000_000u32 / 60));
     }
 }
@@ -80,7 +81,15 @@ pub fn main() {
     canvas.clear();
     canvas.present();
 
-    let map = init_map();
+    let mut game_data = GameData {
+        map: init_map(),
+        snake: Snake {
+            dir: NORTH,
+            body: vec![Pos { x: MAP_X / 2, y: MAP_Y / 2 },
+                       Pos { x: MAP_X / 2, y: MAP_Y / 2 + 1 },
+                       Pos { x: MAP_X / 2, y: MAP_Y / 2 + 2 }]
+        },
+        food_positions: spawn_food(MAX_FOOD) };
 
-    game_loop(&sdl_context, &mut canvas, &map);
+    game_loop(&sdl_context, &mut canvas, &mut game_data);
 }
