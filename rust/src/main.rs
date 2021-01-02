@@ -10,11 +10,26 @@ mod update;
 use crate::render::render;
 use crate::update::update;
 use crate::update::UpdateValue;
+use crate::Direction::NORTH;
 
 const MAP_X: u32 = 50;
 const MAP_Y: u32 = 50;
 const MAP_SIZE: u32 = MAP_X * MAP_Y;
 const MAP_TILE_SIZE: u32 = 10;
+
+#[derive(Copy, Clone)]
+enum Direction {NORTH, EAST, SOUTH, WEST}
+
+#[derive(Copy, Clone)]
+struct Pos {
+    x: u32,
+    y: u32
+}
+
+pub struct Snake {
+    dir: Direction,
+    body: Vec<Pos>
+}
 
 fn init_map() -> [Rect; MAP_SIZE as usize] {
     let mut map: [sdl2::rect::Rect; MAP_SIZE as usize] =
@@ -32,14 +47,22 @@ fn game_loop(sdl_context: &sdl2::Sdl,
              canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
              map: &[Rect; MAP_SIZE as usize]) {
     let mut event_pump = sdl_context.event_pump().unwrap();
+
+    let mut snake: Snake = Snake {
+        dir: NORTH,
+        body: vec![Pos { x: MAP_X / 2, y: MAP_Y / 2 },
+                   Pos { x: MAP_X / 2, y: MAP_Y / 2 + 1 },
+                   Pos { x: MAP_X / 2, y: MAP_Y / 2 + 2 }]
+    };
     let mut i = 0;
 
     loop {
-        if let UpdateValue::GameStop = update(&mut event_pump, &mut i) {
+        if let UpdateValue::GameStop = update(&mut event_pump, &mut snake, &mut i) {
             return
         }
-        render(canvas, &map, i);
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        render(canvas, &map, &snake, i);
+        // ::std::thread::sleep(Duration::new(0, 2_000_000_000u32 / 60));
+        ::std::thread::sleep(Duration::new(0, 4_000_000_000u32 / 60));
     }
 }
 
