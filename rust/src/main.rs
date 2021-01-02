@@ -36,7 +36,7 @@ pub struct Snake {
 pub struct GameData {
     map: [Rect; MAP_SIZE as usize],
     snake: Snake,
-    food_positions: [Pos; MAX_FOOD as usize]
+    food_positions: [Option<Pos>; MAX_FOOD as usize]
 }
 
 fn init_map() -> [Rect; MAP_SIZE as usize] {
@@ -56,13 +56,13 @@ fn game_loop(sdl_context: &sdl2::Sdl,
              game_data: &mut GameData) {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    let mut i = 0;
+    let mut map_blueshift = 0;
 
     loop {
-        if let UpdateValue::GameStop = update(&mut event_pump, game_data, &mut i) {
+        if let UpdateValue::GameStop = update(&mut event_pump, game_data, &mut map_blueshift) {
             return
         }
-        render(canvas, game_data, i);
+        render(canvas, game_data, map_blueshift);
         ::std::thread::sleep(Duration::new(0, 4_000_000_000u32 / 60));
     }
 }
@@ -89,7 +89,7 @@ pub fn main() {
                        Pos { x: MAP_X / 2, y: MAP_Y / 2 + 1 },
                        Pos { x: MAP_X / 2, y: MAP_Y / 2 + 2 }]
         },
-        food_positions: spawn_food(MAX_FOOD) };
+        food_positions: spawn_food(MAX_FOOD, [None; MAX_FOOD as usize]) };
 
     game_loop(&sdl_context, &mut canvas, &mut game_data);
 }

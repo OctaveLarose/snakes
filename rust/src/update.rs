@@ -1,13 +1,26 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use crate::{Snake, Direction, Pos, GameData};
+use rand::Rng;
+
+use crate::{Snake, Direction, Pos, GameData, MAP_X, MAP_Y};
 
 pub enum UpdateValue { Ok, GameStop }
 
-pub fn spawn_food(_nbr: u8) -> [Pos; crate::MAX_FOOD as usize] {
-    let food_pos: [Pos; crate::MAX_FOOD as usize] = [Pos{x: 0, y: 0}; crate::MAX_FOOD as usize];
+pub fn spawn_food(nbr_to_spawn: u8,
+                  mut current_food_positions: [Option<Pos>; crate::MAX_FOOD as usize])
+                  -> [Option<Pos>; crate::MAX_FOOD as usize]
+{
+    let mut rng = rand::thread_rng();
+    let mut nbr_added: u8 = 0;
 
-    food_pos
+    for i in 0..crate::MAX_FOOD {
+        if current_food_positions[i as usize].is_none() && nbr_added < nbr_to_spawn {
+            current_food_positions[i as usize] = Some(Pos{x: rng.gen_range(0..MAP_X), y: rng.gen_range(0..MAP_Y)});
+            nbr_added += 1;
+        }
+    }
+
+    current_food_positions
 }
 
 fn update_snake_pos(snake: &mut Snake) {
@@ -42,8 +55,11 @@ fn change_snake_dir(event: sdl2::event::Event, snake: &mut Snake) {
     }
 }
 
-pub fn update(event_pump: &mut sdl2::EventPump, game_data: &mut GameData, i: &mut u8) -> UpdateValue {
-    *i = (*i + 1) % 255;
+pub fn update(event_pump: &mut sdl2::EventPump,
+              game_data: &mut GameData,
+              map_blueshift: &mut u8) -> UpdateValue
+{
+    *map_blueshift = (*map_blueshift + 1) % 255;
     update_snake_pos(&mut game_data.snake);
 
     for event in event_pump.poll_iter() {
