@@ -1,14 +1,15 @@
 extern crate sdl2;
 
 use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 use std::time::Duration;
 use sdl2::rect::Rect;
 
-use crate::UpdateValue::GameStop;
+mod render;
+mod update;
 
-enum UpdateValue { Ok, GameStop }
+use crate::render::render;
+use crate::update::update;
+use crate::update::UpdateValue;
 
 const MAP_X: u32 = 50;
 const MAP_Y: u32 = 50;
@@ -16,56 +17,15 @@ const MAP_SIZE: u32 = MAP_X * MAP_Y;
 const MAP_TILE_SIZE: u32 = 10;
 
 fn init_map() -> [Rect; MAP_SIZE as usize] {
-    let mut map: [sdl2::rect::Rect; MAP_SIZE as usize] = [sdl2::rect::Rect::new(0, 0, 0, 0); MAP_SIZE as usize];
+    let mut map: [sdl2::rect::Rect; MAP_SIZE as usize] =
+        [sdl2::rect::Rect::new(0, 0, MAP_TILE_SIZE, MAP_TILE_SIZE); MAP_SIZE as usize];
 
     for i in 0..MAP_SIZE {
-        map[i as usize] = sdl2::rect::Rect::new((i % MAP_X * MAP_TILE_SIZE) as i32,
-                                                (i / MAP_X * MAP_TILE_SIZE) as i32,
-                                                MAP_TILE_SIZE,
-                                                MAP_TILE_SIZE);
+        map[i as usize].x = (i % MAP_X * MAP_TILE_SIZE) as i32;
+        map[i as usize].y = (i / MAP_X * MAP_TILE_SIZE) as i32;
     }
 
     map
-}
-
-fn update(event_pump: &mut sdl2::EventPump, i: &mut u8) -> UpdateValue {
-    *i = (*i + 1) % 255;
-
-    for event in event_pump.poll_iter() {
-        match event {
-            Event::Quit { .. } |
-            Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                return GameStop;
-            },
-            Event::KeyDown { keycode: Some(Keycode::Up), .. } |
-            Event::KeyDown { keycode: Some(Keycode::Down), .. } |
-            Event::KeyDown { keycode: Some(Keycode::Left), .. } |
-            Event::KeyDown { keycode: Some(Keycode::Right), .. }  => {
-                print!("Key pressed\n");
-                println!("{:?}", event);
-            },
-            _ => {}
-        }
-    }
-
-    UpdateValue::Ok
-}
-
-fn render(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-          map: &[Rect; MAP_SIZE as usize],
-          i: u8) {
-    canvas.set_draw_color(Color::RGB(i, 64, 255 - &i));
-    canvas.clear();
-
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    for i in 0..MAP_SIZE {
-        let res: std::result::Result<_, _> = canvas.draw_rect(map[i as usize]);
-        if res.is_err() {
-            print!("Error when drawing rectangle {}", i);
-        }
-    }
-
-    canvas.present();
 }
 
 fn game_loop(sdl_context: &sdl2::Sdl,
