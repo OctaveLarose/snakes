@@ -10,7 +10,6 @@ mod update;
 use crate::render::render;
 use crate::update::{update, spawn_food};
 use crate::update::UpdateValue;
-use crate::Direction::NORTH;
 
 const MAP_X: i32 = 40;
 const MAP_Y: i32 = 40;
@@ -94,7 +93,7 @@ pub fn main() {
     let mut game_data = GameData {
         map: init_map(),
         snake: Snake {
-            dir: NORTH,
+            dir: Direction::NORTH,
             body: vec![Pos { x: MAP_X / 2, y: MAP_Y / 2 },
                        Pos { x: MAP_X / 2, y: MAP_Y / 2 + 1 },
                        Pos { x: MAP_X / 2, y: MAP_Y / 2 + 2 }]

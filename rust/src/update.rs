@@ -38,11 +38,11 @@ fn update_snake_pos(snake: &mut Snake) {
 fn check_snake_pos(snake: &mut Snake, mut food_pos: &mut Pos) -> UpdateValue {
     // Checking if the snake is out of bounds
     match snake.body[0] {
-        pos if pos.x < 0 => UpdateValue::GameLost,
-        pos if pos.x >= MAP_X => UpdateValue::GameLost,
-        pos if pos.y < 0 => UpdateValue::GameLost,
-        pos if pos.y >= MAP_Y => UpdateValue::GameLost,
-        _ => UpdateValue::Ok
+        pos if pos.x < 0 => return UpdateValue::GameLost,
+        pos if pos.x >= MAP_X => return UpdateValue::GameLost,
+        pos if pos.y < 0 => return UpdateValue::GameLost,
+        pos if pos.y >= MAP_Y => return UpdateValue::GameLost,
+        _ => {}
     };
 
     // Checking collision with body parts
@@ -58,6 +58,7 @@ fn check_snake_pos(snake: &mut Snake, mut food_pos: &mut Pos) -> UpdateValue {
 
     // Checking collision with food
     if snake.body[0] == *food_pos {
+        snake.body.push(snake.body.last().unwrap().clone());
         let new_food = spawn_food();
         food_pos.x = new_food.x;
         food_pos.y = new_food.y;
@@ -66,13 +67,27 @@ fn check_snake_pos(snake: &mut Snake, mut food_pos: &mut Pos) -> UpdateValue {
 }
 
 fn change_snake_dir(event: sdl2::event::Event, snake: &mut Snake) {
-    snake.dir = match event {
-        sdl2::event::Event::KeyDown {keycode: Some(sdl2::keyboard::Keycode::Up), .. } => Direction::NORTH,
-        sdl2::event::Event::KeyDown {keycode: Some(sdl2::keyboard::Keycode::Right), .. } => Direction::EAST,
-        sdl2::event::Event::KeyDown {keycode: Some(sdl2::keyboard::Keycode::Down), .. } => Direction::SOUTH,
-        sdl2::event::Event::KeyDown {keycode: Some(sdl2::keyboard::Keycode::Left), .. } => Direction::WEST,
-        _ => snake.dir
+    if let Event::KeyDown {keycode: keyval_opt, .. } = event {
+        let keyval = keyval_opt.unwrap();
+
+        // Prevent turning in the exact opposite direction
+        match snake.dir {
+            Direction::NORTH if keyval == sdl2::keyboard::Keycode::Down => return,
+            Direction::EAST if keyval == sdl2::keyboard::Keycode::Left => return,
+            Direction::SOUTH if keyval == sdl2::keyboard::Keycode::Up => return,
+            Direction::WEST if keyval == sdl2::keyboard::Keycode::Right => return,
+            _ => {}
+        }
+
+        snake.dir = match keyval {
+            sdl2::keyboard::Keycode::Up => Direction::NORTH,
+            sdl2::keyboard::Keycode::Right => Direction::EAST,
+            sdl2::keyboard::Keycode::Down => Direction::SOUTH,
+            sdl2::keyboard::Keycode::Left => Direction::WEST,
+            _ => snake.dir
+        }
     }
+
 }
 
 pub fn update(event_pump: &mut sdl2::EventPump,
