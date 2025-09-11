@@ -4,8 +4,8 @@
 
 class Game {
 public:
-  const int MAP_LENGTH = 200;
-  const int MAP_HEIGHT = 200;
+  static const int MAP_LENGTH = 20;
+  static const int MAP_HEIGHT = 20;
 
   Snake snake;
   Direction cur_dir;
@@ -13,8 +13,9 @@ public:
 
   Game();
   void play();
-  void update_game_state(Direction input);
+  void update_game_state();
 
 private:
   void spawnFood();
+  bool check_if_game_over();
 };

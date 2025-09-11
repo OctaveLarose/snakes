@@ -1,59 +1,82 @@
 #include "renderer.h"
+#include "game.h"
 #include "snake.h"
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Window/Keyboard.hpp>
 #include <iostream>
 
 #include <SFML/Graphics.hpp>
 
 Renderer::Renderer() {
-  window = sf::RenderWindow(sf::VideoMode({500u, 500u}), "Snake");
-  window.setFramerateLimit(60);
+  window = sf::RenderWindow(
+      sf::VideoMode(
+          {(unsigned int)(Game::MAP_LENGTH * Renderer::MAP_TILE_SIZE),
+           (unsigned int)(Game::MAP_HEIGHT * Renderer::MAP_TILE_SIZE)}),
+      "Snake");
+  window.setFramerateLimit(10);
 }
-
-void Renderer::render_frame() {}
 
 void Renderer::render_loop(Game *game) {
   while (window.isOpen()) {
-    while (const std::optional event = window.pollEvent()) {
-      if (event->is<sf::Event::Closed>()) {
-        window.close();
-      } else if (const auto *keyPressed =
-                     event->getIf<sf::Event::KeyPressed>()) {
-        if (keyPressed->scancode == sf::Keyboard::Scancode::Up ||
-            keyPressed->scancode == sf::Keyboard::Scancode::W) {
-          game->cur_dir = Direction::UP;
-        } else if (keyPressed->scancode == sf::Keyboard::Scancode::Left ||
-                   keyPressed->scancode == sf::Keyboard::Scancode::A) {
-          game->cur_dir = Direction::LEFT;
-        } else if (keyPressed->scancode == sf::Keyboard::Scancode::Down ||
-                   keyPressed->scancode == sf::Keyboard::Scancode::S) {
-          game->cur_dir = Direction::DOWN;
-        } else if (keyPressed->scancode == sf::Keyboard::Scancode::Right ||
-                   keyPressed->scancode == sf::Keyboard::Scancode::D) {
-          game->cur_dir = Direction::RIGHT;
-        }
+    this->poll_event(game);
+    this->render_frame(game);
+    game->update_game_state();
+  }
+}
+
+void Renderer::poll_event(Game *game) {
+  while (const std::optional event = window.pollEvent()) {
+    if (event->is<sf::Event::Closed>()) {
+      window.close();
+    } else if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>()) {
+      auto key = keyPressed->scancode;
+      if ((key == sf::Keyboard::Scancode::Up ||
+           key == sf::Keyboard::Scancode::W) &&
+          game->cur_dir != Direction::DOWN) {
+        game->cur_dir = Direction::UP;
+      } else if ((key == sf::Keyboard::Scancode::Left ||
+                  key == sf::Keyboard::Scancode::A) &&
+                 game->cur_dir != Direction::RIGHT) {
+        game->cur_dir = Direction::LEFT;
+      } else if ((key == sf::Keyboard::Scancode::Down ||
+                  key == sf::Keyboard::Scancode::S) &&
+                 game->cur_dir != Direction::UP) {
+        game->cur_dir = Direction::DOWN;
+      } else if ((key == sf::Keyboard::Scancode::Right ||
+                  key == sf::Keyboard::Scancode::D) &&
+                 game->cur_dir != Direction::LEFT) {
+        game->cur_dir = Direction::RIGHT;
       }
     }
-
-    window.clear();
-
-    // draw snake
-    for (Pos body_part : game->snake.getBody()) {
-      sf::CircleShape circle;
-      circle.setRadius(10);
-      circle.setPosition({(float)body_part.x, (float)body_part.y});
-      window.draw(circle);
-    }
-
-    // draw food
-    sf::CircleShape circle;
-    circle.setRadius(10);
-    circle.setFillColor(sf::Color(255, 0, 0));
-    circle.setPosition({(float)game->food_pos.x, (float)game->food_pos.y});
-    window.draw(circle);
-
-    window.display();
-
-    game->update_game_state(Direction::RIGHT);
   }
+}
+
+void Renderer::render_frame(Game *game) {
+  window.clear();
+
+  // sf::RectangleShape map_outline({Game::MAP_LENGTH * Renderer::MAP_TILE_SIZE,
+  //                                 Game::MAP_HEIGHT *
+  //                                 Renderer::MAP_TILE_SIZE});
+  // map_outline.setPosition({0, 0});
+  // map_outline.setFillColor(sf::Color(0, 0, 0));
+  // map_outline.setOutlineColor(sf::Color(255, 255, 255));
+  // map_outline.setOutlineThickness(5);
+  // window.draw(map_outline);
+
+  for (Pos body_part : game->snake.getBody()) {
+    this->draw_circle(body_part, sf::Color(255, 255, 255));
+  }
+
+  this->draw_circle(game->food_pos, sf::Color(255, 0, 0));
+
+  window.display();
+}
+
+void Renderer::draw_circle(Pos circle_pos, sf::Color color) {
+  sf::CircleShape circle;
+  circle.setRadius(Renderer::MAP_TILE_SIZE / 2);
+  circle.setPosition({(float)circle_pos.x * Renderer::MAP_TILE_SIZE,
+                      (float)circle_pos.y * Renderer::MAP_TILE_SIZE});
+  circle.setFillColor(color);
+  window.draw(circle);
 }
