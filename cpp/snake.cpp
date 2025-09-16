@@ -2,10 +2,7 @@
 #include <iostream>
 #include <vector>
 
-Snake::Snake(int x, int y) {
-  Pos *start_pos = new Pos(x, y);
-  body.push_back(*start_pos);
-}
+Snake::Snake(int x, int y) { body.emplace_back(Pos(x, y)); }
 
 void Snake::growBody() { body.push_back(body.back()); }
 
