@@ -12,8 +12,8 @@ public:
   Renderer();
   // TODO: these functions should take some game state instead of
   // an overaching Game class. But hey, that works for a toy project.
-  void render_loop(Game *game);
-  void poll_event(Game *game);
-  void render_frame(Game *game);
+  void render_loop(GameState *game);
+  void poll_event(GameState *game);
+  void render_frame(GameState *game);
   void draw_circle(Pos circle_pos, sf::Color color);
 };

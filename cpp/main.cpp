@@ -1,6 +1,13 @@
 #include "game.h"
+#include "renderer.h"
+#include <iostream>
 
 int main() {
-  Game game = Game();
-  game.play();
+  GameState game_state;
+  Renderer renderer;
+  try {
+    renderer.render_loop(&game_state);
+  } catch (GameOverException e) {
+    std::cout << "Game over! Final score: " << e.getFinalScore() << std::endl;
+  }
 }

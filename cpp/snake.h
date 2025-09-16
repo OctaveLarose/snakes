@@ -2,7 +2,7 @@
 
 #include <vector>
 
-enum Direction { LEFT, RIGHT, UP, DOWN };
+enum Direction { LEFT, DOWN, RIGHT, UP };
 
 class Pos {
 public:
@@ -36,10 +36,12 @@ public:
 
 class Snake {
   std::vector<Pos> body = {};
+  Direction cur_dir;
 
 public:
-  Snake(int x, int y);
+  Snake(int x, int y, Direction dir);
   std::vector<Pos> getBody();
-  void moveBody(Direction dir);
+  void changeDir(Direction dir);
+  void moveBody();
   void growBody();
 };

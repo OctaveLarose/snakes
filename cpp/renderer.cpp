@@ -10,13 +10,13 @@
 Renderer::Renderer() {
   window = sf::RenderWindow(
       sf::VideoMode(
-          {(unsigned int)(Game::MAP_LENGTH * Renderer::MAP_TILE_SIZE),
-           (unsigned int)(Game::MAP_HEIGHT * Renderer::MAP_TILE_SIZE)}),
+          {(unsigned int)(GameState::MAP_LENGTH * Renderer::MAP_TILE_SIZE),
+           (unsigned int)(GameState::MAP_HEIGHT * Renderer::MAP_TILE_SIZE)}),
       "Snake");
   window.setFramerateLimit(10);
 }
 
-void Renderer::render_loop(Game *game) {
+void Renderer::render_loop(GameState *game) {
   while (window.isOpen()) {
     this->poll_event(game);
     this->render_frame(game);
@@ -24,34 +24,30 @@ void Renderer::render_loop(Game *game) {
   }
 }
 
-void Renderer::poll_event(Game *game) {
+void Renderer::poll_event(GameState *game) {
   while (const std::optional event = window.pollEvent()) {
     if (event->is<sf::Event::Closed>()) {
       window.close();
     } else if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>()) {
       auto key = keyPressed->scancode;
       if ((key == sf::Keyboard::Scancode::Up ||
-           key == sf::Keyboard::Scancode::W) &&
-          game->cur_dir != Direction::DOWN) {
-        game->cur_dir = Direction::UP;
+           key == sf::Keyboard::Scancode::W)) {
+        game->snake.changeDir(Direction::UP);
       } else if ((key == sf::Keyboard::Scancode::Left ||
-                  key == sf::Keyboard::Scancode::A) &&
-                 game->cur_dir != Direction::RIGHT) {
-        game->cur_dir = Direction::LEFT;
+                  key == sf::Keyboard::Scancode::A)) {
+        game->snake.changeDir(Direction::LEFT);
       } else if ((key == sf::Keyboard::Scancode::Down ||
-                  key == sf::Keyboard::Scancode::S) &&
-                 game->cur_dir != Direction::UP) {
-        game->cur_dir = Direction::DOWN;
+                  key == sf::Keyboard::Scancode::S)) {
+        game->snake.changeDir(Direction::DOWN);
       } else if ((key == sf::Keyboard::Scancode::Right ||
-                  key == sf::Keyboard::Scancode::D) &&
-                 game->cur_dir != Direction::LEFT) {
-        game->cur_dir = Direction::RIGHT;
+                  key == sf::Keyboard::Scancode::D)) {
+        game->snake.changeDir(Direction::RIGHT);
       }
     }
   }
 }
 
-void Renderer::render_frame(Game *game) {
+void Renderer::render_frame(GameState *game) {
   window.clear();
 
   // sf::RectangleShape map_outline({Game::MAP_LENGTH * Renderer::MAP_TILE_SIZE,

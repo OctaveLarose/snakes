@@ -1,26 +1,20 @@
 #include "game.h"
-#include "renderer.h"
 #include "snake.h"
 #include <cstdlib>
 #include <ctime>
 
-Game::Game()
-    : snake(Snake(Game::MAP_LENGTH / 2, Game::MAP_HEIGHT / 2)),
-      cur_dir(Direction::RIGHT) {
+GameState::GameState()
+    : snake(Snake(GameState::MAP_LENGTH / 2, GameState::MAP_HEIGHT / 2,
+                  Direction::RIGHT)) {
   srand(time(0));
   this->spawnFood();
 }
 
-void Game::play() {
-  auto renderer = Renderer();
-  renderer.render_loop(this);
-}
-
-void Game::update_game_state() {
-  snake.moveBody(cur_dir);
+void GameState::update_game_state() {
+  snake.moveBody();
 
   if (this->check_if_game_over()) {
-    std::exit(0);
+    throw GameOverException(this->snake.getBody().size());
   }
 
   if (snake.getBody()[0] == food_pos) {
@@ -29,15 +23,17 @@ void Game::update_game_state() {
   }
 }
 
-void Game::spawnFood() {
-  food_pos = Pos(rand() % Game::MAP_LENGTH, rand() % Game::MAP_HEIGHT);
+void GameState::spawnFood() {
+  food_pos =
+      Pos(rand() % GameState::MAP_LENGTH, rand() % GameState::MAP_HEIGHT);
 }
 
-bool Game::check_if_game_over() {
+bool GameState::check_if_game_over() {
   auto snake_head = snake.getBody()[0];
 
   if (snake_head.x < 0 || snake_head.y < 0 ||
-      snake_head.x >= Game::MAP_LENGTH || snake_head.y >= Game::MAP_HEIGHT) {
+      snake_head.x >= GameState::MAP_LENGTH ||
+      snake_head.y >= GameState::MAP_HEIGHT) {
     return true;
   }
 
